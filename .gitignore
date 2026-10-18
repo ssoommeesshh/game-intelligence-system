@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local reference originals; identical tracked copies live in docs/reference/
+/DBMS Level 3 Project Requirements.pdf
+/DBMS Level 3.pdf
+/ERdiag-gen.jpeg
+/writeen-ERdiag.jpeg
+node_modules

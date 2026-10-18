@@ -13,7 +13,7 @@ Record the agreed split in this table together. Split work into small issues wit
 
 ## First-time setup
 
-Accept the private repository invitation and follow the README. Configure your own real commit identity inside your clone:
+Follow the README to clone the public repository. Accept the collaborator invitation before pushing changes. Configure your own real commit identity inside your clone:
 
 ```powershell
 git config user.name "Your Name"

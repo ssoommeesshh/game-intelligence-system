@@ -21,7 +21,14 @@ npm run dev
 
 Open http://localhost:3000. If that port is occupied, check the terminal for the port Next.js selected. Stop the server with Ctrl+C.
 
-This is a private repository: accept the collaborator invitation first, and authenticate Git with your own GitHub account. Do not use a teammate's credentials. Clone into any convenient directory; the folder name does not affect the app. The original checkout is at `C:\Users\harih\game-intelligence-platform`; there is no need to move it.
+This repository is public, so anyone can clone it. Pushing changes requires collaborator access and authentication with your own GitHub account. Do not use a teammate's credentials. Clone into any convenient directory; the folder name does not affect the app.
+
+The local app has been moved into `C:\Users\harih\OneDrive\Desktop\somesh\sem-5\dbms\miniproj`. Run your project commands from this directory:
+
+```powershell
+cd "C:\Users\harih\OneDrive\Desktop\somesh\sem-5\dbms\miniproj"
+npm run dev
+```
 
 The starter currently needs **no database services, API keys, or environment variables**. Database setup instructions and an `.env.example` will be added when integration is implemented. Never commit actual passwords, tokens, or `.env` files.
 
