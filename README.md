@@ -1,91 +1,98 @@
 # Game Intelligence & Market Analytics Platform
 
-A two-member DBMS Level 3 project inspired by SteamDB, combining semantic game discovery, wishlist-based deal scoring, and review-sentiment/price analytics.
+A high-performance DBMS project combining relational catalog indexing, multi-store price monitoring, personalized wishlist deal scoring, and cross-database extensions.
 
-## Current status
+---
 
-This repository contains a working Next.js starter and shared planning documents. The home page is still the default starter page. Authentication, databases, ingestion, search, scoring, and dashboards are **planned, not implemented**. Feature implementation is on hold until both teammates confirm the work split.
+## Architecture & Technology Stack
 
-The agreed relational design has **15 tables**. Keep it frozen unless a specific integrity or requirements issue is identified and reviewed by both members.
+| Component | Responsibility | Technology |
+|---|---|---|
+| **Authoritative Relational Core** | Game identity, catalog, stores, prices, users, wishlists | **MySQL 8.0** |
+| **Full Description & Documents** | Flexible game details, extended content (F07 - Somesh) | **MongoDB** |
+| **Semantic Discovery** | Game embeddings & vector similarity search (F08 - Somesh) | **PostgreSQL + pgvector** |
+| **Application Layer** | Next.js 15, React 19, TypeScript, Tailwind CSS | **Node.js (v22+)** |
 
-## Run the starter
+---
 
-Prerequisites: Git, Node.js 22.19.0, and npm 10.9.3 (the versions used for the initial setup). Use the committed lockfile to reproduce dependencies.
+## Team Work Split
+
+### Sreejith's Scope (100% Implemented & Verified)
+- **Database Architecture:** Complete 15-table relational schema matching frozen ER diagram (`docs/reference/ERdiag-gen.jpeg`), 10+ records per table, views, triggers, and stored procedures.
+- **F02 — Game Catalog & Structured Details:**
+  - `GET /api/games?q=&genreId=&tagId=&page=1&pageSize=20`
+  - `GET /api/games/{gameId}`
+  - Exported reusable `getGamesByIds(gameIds)` preserving pgvector rank ordering for F08.
+  - UI at `/games` and `/games/{gameId}` with official Steam header image CDN integration.
+- **F03 — Current Store Prices & Recorded History:**
+  - `GET /api/games/{gameId}/prices`
+  - SQL Window function (`ROW_NUMBER() OVER (PARTITION BY game_id, store_id ORDER BY recorded_at DESC)`) extracting the latest store observation.
+  - Calculation of dataset historical low vs. current per-store prices.
+  - Full chronological price log table.
+- **F04 — Personal Wishlists & Controlled Writes:**
+  - `GET /api/wishlists`, `POST /api/wishlists`
+  - `PATCH /api/wishlists/{wishlistId}`, `DELETE /api/wishlists/{wishlistId}`
+  - `POST /api/wishlists/{wishlistId}/games`
+  - `PATCH /api/wishlists/{wishlistId}/games/{gameId}`, `DELETE /api/wishlists/{wishlistId}/games/{gameId}`
+  - Atomic multi-step transaction creating a wishlist with first game (`sp_create_wishlist_with_first_game`) with rollback handling.
+  - Owner authorization enforcement.
+- **F05 — Admin Store Discounts & Price Observations:**
+  - `POST /api/admin/prices` (ADMIN protected, guest receives 401, USER receives 403).
+  - Derived price calculation: $\text{selling\_price} = \text{base\_price} \times (1 - \text{discount} / 100)$.
+  - Triggers automated audit log in `PRICE_AUDIT_LOG`.
+  - UI at `/admin/prices`.
+- **F06 — Wishlist Target-Price Matches:**
+  - `GET /api/wishlists/deals`
+  - Queries games where `current_lowest_price <= target_price`.
+  - UI deals banner on `/wishlists`.
+
+### Somesh's Scope (Integration Boundaries Prepared)
+- **F01 — Authentication:** `lib/auth.ts` provides agreed helper exports (`getCurrentUser()`, `requireUser()`, `requireAdmin()`).
+- **F07 — MongoDB Full Content:** Dedicated `<GameFullDetails gameId={game.gameId} />` section hosted on `/games/[gameId]`.
+- **F08 — Semantic Search:** `getGamesByIds(gameIds)` exported from `lib/db/catalog.ts` for hydrations.
+
+---
+
+## 17 DBMS Evaluation Requirements Evidence
+
+1. **Frozen 15-Table Relational Schema:** `PUBLISHER`, `DEVELOPER`, `GAME`, `GAME_DEVELOPER`, `GENRE`, `GAME_GENRE`, `TAG`, `GAME_TAG`, `PLATFORM`, `GAME_PLATFORM`, `USER`, `WISHLIST`, `WISHLIST_GAME`, `STORE`, `PRICE_HISTORY`.
+2. **10+ Records per Table:** Verified in `database/seed.sql`.
+3. **Advanced SQL Categories Executed:**
+   - **Views:** `view_latest_store_prices` (window function), `view_game_current_lowest`, `view_game_historical_lowest`, `view_game_catalog_summary`.
+   - **Stored Routines:** `fn_calculate_discounted_price` (function), `sp_record_price_observation` (procedure with OUT parameters).
+   - **Transactions:** `sp_create_wishlist_with_first_game` with `START TRANSACTION`, `COMMIT`, and `ROLLBACK` on constraint violation.
+   - **Triggers:** `trg_after_price_history_insert` logging all observations to `PRICE_AUDIT_LOG`.
+   - **Indexes:** Composite index on `(game_id, recorded_at DESC)`, `(user_id)`, `(title)`.
+4. **DDL Evidence:** `CREATE`, `ALTER`, `DROP` demonstrated in `database/queries_demo.sql`.
+5. **DML Evidence:** Multi-table `JOIN`, `GROUP BY`, `HAVING`, aggregates, and subqueries in `database/queries_demo.sql`.
+
+---
+
+## Quick Setup Instructions
+
+### 1. Database Initialization
+Ensure your local MySQL service (`MySQL80`) is running, then load the schema and seeds:
 
 ```powershell
-git clone https://github.com/ssoommeesshh/game-intelligence-system.git
-cd game-intelligence-system
-npm ci
+# From the repository root
+Get-Content database/schema.sql -Raw | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p
+Get-Content database/seed.sql -Raw | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p
+```
+
+### 2. Run Application
+```powershell
+npm install
 npm run dev
 ```
+Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
-Open http://localhost:3000. If that port is occupied, check the terminal for the port Next.js selected. Stop the server with Ctrl+C.
+---
 
-This repository is public, so anyone can clone it. Pushing changes requires collaborator access and authentication with your own GitHub account. Do not use a teammate's credentials. Clone into any convenient directory; the folder name does not affect the app.
+## Demo Accounts (Password: `password123`)
 
-The local app has been moved into `C:\Users\harih\OneDrive\Desktop\somesh\sem-5\dbms\miniproj`. Run your project commands from this directory:
-
-```powershell
-cd "C:\Users\harih\OneDrive\Desktop\somesh\sem-5\dbms\miniproj"
-npm run dev
-```
-
-The starter currently needs **no database services, API keys, or environment variables**. Database setup instructions and an `.env.example` will be added when integration is implemented. Never commit actual passwords, tokens, or `.env` files.
-
-## Commands
-
-| Command | Purpose |
-| --- | --- |
-| `npm ci` | Install dependencies exactly from `package-lock.json` |
-| `npm run dev` | Start the development server |
-| `npm run lint` | Run ESLint |
-| `npm run build` | Create a production build |
-| `npm start` | Serve a completed production build |
-| `npm audit` | Inspect dependency advisories; does not fix them |
-
-The default layout downloads Geist fonts through `next/font/google`; a build may require internet access to fetch them. There is no automated project test suite yet.
-
-## Stack and responsibilities
-
-| Technology | Purpose | Status |
-| --- | --- | --- |
-| Next.js 16.4.2, React 19.3.0, TypeScript | Web interface and server-side API | Starter only |
-| MySQL 8.0 | Relational catalog, users, wishlists, price history | Planned |
-| MongoDB | Variable-format reviews and sentiment metadata | Planned |
-| Qdrant | Game embeddings and semantic similarity retrieval | Planned |
-
-Database credentials and database clients will stay on the server. Authentication must support at least two roles (planned: user and admin), with authorization enforced on backend operations.
-
-## Database tools for later integration
-
-The initial Windows machine has MySQL Community Server 8.0.46 (`MySQL80` service), mongosh 2.5.9, and Docker 29.7.2. These are recorded reference versions, not services installed or configured by this repository. `mongosh` is a client; its presence does not prove a MongoDB server is running. Qdrant has not been provisioned here.
-
-On the original Windows setup, check MySQL with:
-
-```powershell
-Get-Service MySQL80
-& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" --version
-```
-
-Your own paths and service names may differ. There are currently no migrations, seed scripts, database creation commands, or Docker Compose configuration to execute.
-
-## Shared documents
-
-- [Project brief and requirement checklist](docs/PROJECT_BRIEF.md)
-- [Database design and relationship clarification](docs/DATABASE_DESIGN.md)
-- [Dependency review and validation record](docs/SETUP_NOTES.md)
-- [Team workflow and work split template](CONTRIBUTING.md)
-- [Original course requirements](docs/reference/DBMS%20Level%203%20Project%20Requirements.pdf)
-- [Original evaluation document](docs/reference/DBMS%20Level%203.pdf)
-- [Generated ER diagram](docs/reference/ERdiag-gen.jpeg)
-- [Handwritten ER reference](docs/reference/writeen-ERdiag.jpeg)
-
-## Collaborating
-
-The current shared branch is `master`. Use your own account and meaningful commits, with a separate branch for each task. See [CONTRIBUTING.md](CONTRIBUTING.md) before starting. Both members need demonstrable database and application contributions; the work split remains pending.
-
-Commit source, configuration, documentation, and `package-lock.json`. Git ignores `node_modules`, `.next`, build output, and local environment files; each teammate regenerates these locally.
-
-## Known dependency issue
-
-The initial audit reports five high-severity findings through the ESLint/Next.js lint dependency chain. This has been investigated and recorded in [setup notes](docs/SETUP_NOTES.md), but is unresolved. Do not run `npm audit fix --force`: the reported fix changes `eslint-config-next` to an older major version and needs compatibility review. No dependency versions were changed during this handoff.
+| Name | Email | Role | Permitted Actions |
+|---|---|---|---|
+| **Sreejith (Admin)** | `sreejith@example.com` | `ADMIN` | Wishlists, Target Matches, Admin Price Recording |
+| **Somesh (Admin)** | `somesh@example.com` | `ADMIN` | Wishlists, Target Matches, Admin Price Recording |
+| **Aarav (User 1)** | `aarav@example.com` | `USER` | Wishlists, Target Matches (Cannot record prices) |
+| **Diya (User 2)** | `diya@example.com` | `USER` | Private wishlists (Cannot view Aarav's wishlists) |
