@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { query } from "./db/mysql";
 import bcrypt from "bcryptjs";
 
@@ -9,7 +10,43 @@ export interface SessionUser {
   role: "USER" | "ADMIN";
 }
 
+interface SessionPayload extends SessionUser {
+  expiresAt: number;
+}
+
 const SESSION_COOKIE_NAME = "gis_session";
+const SESSION_LIFETIME_SECONDS = 7 * 24 * 60 * 60;
+
+function getSessionSecret(): string {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
+    throw new Error("SESSION_SECRET is required for cookie authentication");
+  }
+  return secret;
+}
+
+function sign(payload: string): string {
+  return createHmac("sha256", getSessionSecret()).update(payload).digest("base64url");
+}
+
+function encodeSession(session: object): string {
+  const payload = Buffer.from(JSON.stringify(session)).toString("base64url");
+  return `${payload}.${sign(payload)}`;
+}
+
+function decodeSession(value: string): SessionPayload | null {
+  const [payload, signature, ...extra] = value.split(".");
+  if (!payload || !signature || extra.length > 0) return null;
+  const expected = sign(payload);
+  const supplied = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expected);
+  if (supplied.length !== expectedBuffer.length || !timingSafeEqual(supplied, expectedBuffer)) return null;
+  const decoded: unknown = JSON.parse(Buffer.from(payload, "base64url").toString("utf-8"));
+  if (!decoded || typeof decoded !== "object") return null;
+  const session = decoded as Partial<SessionPayload>;
+  if (typeof session.userId !== "string" || typeof session.name !== "string" || typeof session.email !== "string" || (session.role !== "USER" && session.role !== "ADMIN") || typeof session.expiresAt !== "number") return null;
+  return session as SessionPayload;
+}
 
 // Base64-encoded JSON session with HMAC/timestamp simulation
 export async function createSession(user: SessionUser): Promise<void> {
@@ -22,13 +59,12 @@ export async function createSession(user: SessionUser): Promise<void> {
     expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
   };
 
-  const payload = Buffer.from(JSON.stringify(sessionData)).toString("base64");
-  cookieStore.set(SESSION_COOKIE_NAME, payload, {
+  cookieStore.set(SESSION_COOKIE_NAME, encodeSession(sessionData), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 7 * 24 * 60 * 60,
+    maxAge: SESSION_LIFETIME_SECONDS,
   });
 }
 
@@ -45,7 +81,8 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
       return null;
     }
 
-    const decoded = JSON.parse(Buffer.from(sessionCookie.value, "base64").toString("utf-8"));
+    const decoded = decodeSession(sessionCookie.value);
+    if (!decoded) return null;
     if (!decoded.userId || !decoded.expiresAt || decoded.expiresAt < Date.now()) {
       return null;
     }

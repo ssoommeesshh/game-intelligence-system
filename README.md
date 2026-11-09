@@ -86,6 +86,20 @@ npm run dev
 ```
 Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
+### 3. Optional Somesh Features (F07 and F08)
+
+MongoDB and PostgreSQL are optional enhancements: the MySQL catalog continues to work if either service is unavailable. Set `MONGODB_URI`, `POSTGRES_URL`, and a strong `SESSION_SECRET` in `.env.local`, then initialize the two extension stores:
+
+```powershell
+# MongoDB extended descriptions
+mongosh $env:MONGODB_URI database/mongodb-seed.js
+
+# pgvector semantic ranking
+Get-Content database/postgres-vector.sql -Raw | psql $env:POSTGRES_URL
+```
+
+`GET /api/games/{gameId}/similar?limit=6` returns the pgvector-ranked games, hydrated from the authoritative MySQL catalog.
+
 ---
 
 ## Demo Accounts (Password: `password123`)

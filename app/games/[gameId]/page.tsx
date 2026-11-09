@@ -5,6 +5,8 @@ import { getGamePrices } from "@/lib/db/prices";
 import { getCurrentUser } from "@/lib/auth";
 import { getUserWishlists } from "@/lib/db/wishlists";
 import AddToWishlistModal from "./AddToWishlistModal";
+import GameFullDetails from "@/components/GameFullDetails";
+import SimilarGames from "@/components/SimilarGames";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -373,7 +375,7 @@ export default async function GameDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* SOMESH'S INTEGRATION SECTION (F07 - MongoDB Full Game Details) */}
+      {/* F07 — MongoDB full game content */}
       <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-4">
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
           <div className="flex items-center space-x-2">
@@ -383,19 +385,13 @@ export default async function GameDetailPage({ params }: PageProps) {
               F07 &bull; MongoDB Integration Zone
             </span>
           </div>
-          <span className="text-xs text-slate-500">Owned by Somesh</span>
+          <span className="text-xs text-slate-500">Optional document store</span>
         </div>
-
-        <div className="bg-slate-950/80 border border-dashed border-slate-800 rounded-xl p-6 text-center space-y-2">
-          <p className="text-sm font-medium text-slate-300">
-            MongoDB Game Details Component Boundary
-          </p>
-          <p className="text-xs text-slate-500 max-w-xl mx-auto">
-            This designated section is ready to host Somesh&apos;s <code className="text-indigo-300">&lt;GameFullDetails gameId=&quot;{game.gameId}&quot; /&gt;</code> component.
-            As agreed in the feature requirements, missing MongoDB documents will gracefully display here without affecting the authoritative MySQL catalog above.
-          </p>
-        </div>
+        <GameFullDetails gameId={game.gameId} />
       </div>
+
+      {/* F08 — pgvector semantic ranking, hydrated by the MySQL catalog. */}
+      <SimilarGames gameId={game.gameId} />
     </div>
   );
 }
