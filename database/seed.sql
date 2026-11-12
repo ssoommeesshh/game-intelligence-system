@@ -207,19 +207,19 @@ INSERT INTO `GAME_PLATFORM` (`game_id`, `platform_id`) VALUES
 
 -- ---------------------------------------------------------------------
 -- 12. USER (10+ records with bcrypt hash for 'password123')
--- Hash: $2b$10$wN105/xT8B8zYQoN08KzreB5Vp8p.QnU/QYkL4u4/jS.rT8mZ9zWy
+-- Hash: $2a$10$xKtzXK.Xaot0qZz67r4YrO3qaQFgaTN1DWbYVbKXoI7gDlhda9Jby (matches 'password123')
 -- ---------------------------------------------------------------------
 INSERT INTO `USER` (`user_id`, `name`, `email`, `password_hash`, `role`, `created_at`) VALUES
-('usr-001', 'Sreejith (Admin)', 'sreejith@example.com', '$2b$10$wN105/xT8B8zYQoN08KzreB5Vp8p.QnU/QYkL4u4/jS.rT8mZ9zWy', 'ADMIN', '2026-01-01 10:00:00'),
-('usr-002', 'Somesh (Admin)', 'somesh@example.com', '$2b$10$wN105/xT8B8zYQoN08KzreB5Vp8p.QnU/QYkL4u4/jS.rT8mZ9zWy', 'ADMIN', '2026-01-01 10:00:00'),
-('usr-003', 'Aarav Patel (User 1)', 'aarav@example.com', '$2b$10$wN105/xT8B8zYQoN08KzreB5Vp8p.QnU/QYkL4u4/jS.rT8mZ9zWy', 'USER', '2026-01-02 11:00:00'),
-('usr-004', 'Diya Sharma (User 2)', 'diya@example.com', '$2b$10$wN105/xT8B8zYQoN08KzreB5Vp8p.QnU/QYkL4u4/jS.rT8mZ9zWy', 'USER', '2026-01-03 12:00:00'),
-('usr-005', 'Rohan Gupta', 'rohan@example.com', '$2b$10$wN105/xT8B8zYQoN08KzreB5Vp8p.QnU/QYkL4u4/jS.rT8mZ9zWy', 'USER', '2026-01-04 13:00:00'),
-('usr-006', 'Ananya Iyer', 'ananya@example.com', '$2b$10$wN105/xT8B8zYQoN08KzreB5Vp8p.QnU/QYkL4u4/jS.rT8mZ9zWy', 'USER', '2026-01-05 14:00:00'),
-('usr-007', 'Vikram Singh', 'vikram@example.com', '$2b$10$wN105/xT8B8zYQoN08KzreB5Vp8p.QnU/QYkL4u4/jS.rT8mZ9zWy', 'USER', '2026-01-06 15:00:00'),
-('usr-008', 'Neha Reddy', 'neha@example.com', '$2b$10$wN105/xT8B8zYQoN08KzreB5Vp8p.QnU/QYkL4u4/jS.rT8mZ9zWy', 'USER', '2026-01-07 16:00:00'),
-('usr-009', 'Kavita Nair', 'kavita@example.com', '$2b$10$wN105/xT8B8zYQoN08KzreB5Vp8p.QnU/QYkL4u4/jS.rT8mZ9zWy', 'USER', '2026-01-08 17:00:00'),
-('usr-010', 'Rahul Verma', 'rahul@example.com', '$2b$10$wN105/xT8B8zYQoN08KzreB5Vp8p.QnU/QYkL4u4/jS.rT8mZ9zWy', 'USER', '2026-01-09 18:00:00');
+('usr-001', 'Sreejith (Admin)', 'sreejith@example.com', '$2a$10$xKtzXK.Xaot0qZz67r4YrO3qaQFgaTN1DWbYVbKXoI7gDlhda9Jby', 'ADMIN', '2026-01-01 10:00:00'),
+('usr-002', 'Somesh (Admin)', 'somesh@example.com', '$2a$10$xKtzXK.Xaot0qZz67r4YrO3qaQFgaTN1DWbYVbKXoI7gDlhda9Jby', 'ADMIN', '2026-01-01 10:00:00'),
+('usr-003', 'Aarav Patel (User 1)', 'aarav@example.com', '$2a$10$xKtzXK.Xaot0qZz67r4YrO3qaQFgaTN1DWbYVbKXoI7gDlhda9Jby', 'USER', '2026-01-02 11:00:00'),
+('usr-004', 'Diya Sharma (User 2)', 'diya@example.com', '$2a$10$xKtzXK.Xaot0qZz67r4YrO3qaQFgaTN1DWbYVbKXoI7gDlhda9Jby', 'USER', '2026-01-03 12:00:00'),
+('usr-005', 'Rohan Gupta', 'rohan@example.com', '$2a$10$xKtzXK.Xaot0qZz67r4YrO3qaQFgaTN1DWbYVbKXoI7gDlhda9Jby', 'USER', '2026-01-04 13:00:00'),
+('usr-006', 'Ananya Iyer', 'ananya@example.com', '$2a$10$xKtzXK.Xaot0qZz67r4YrO3qaQFgaTN1DWbYVbKXoI7gDlhda9Jby', 'USER', '2026-01-05 14:00:00'),
+('usr-007', 'Vikram Singh', 'vikram@example.com', '$2a$10$xKtzXK.Xaot0qZz67r4YrO3qaQFgaTN1DWbYVbKXoI7gDlhda9Jby', 'USER', '2026-01-06 15:00:00'),
+('usr-008', 'Neha Reddy', 'neha@example.com', '$2a$10$xKtzXK.Xaot0qZz67r4YrO3qaQFgaTN1DWbYVbKXoI7gDlhda9Jby', 'USER', '2026-01-07 16:00:00'),
+('usr-009', 'Kavita Nair', 'kavita@example.com', '$2a$10$xKtzXK.Xaot0qZz67r4YrO3qaQFgaTN1DWbYVbKXoI7gDlhda9Jby', 'USER', '2026-01-08 17:00:00'),
+('usr-010', 'Rahul Verma', 'rahul@example.com', '$2a$10$xKtzXK.Xaot0qZz67r4YrO3qaQFgaTN1DWbYVbKXoI7gDlhda9Jby', 'USER', '2026-01-09 18:00:00');
 
 -- ---------------------------------------------------------------------
 -- 13. WISHLIST (10+ records)
