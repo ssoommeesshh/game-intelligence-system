@@ -4,6 +4,7 @@ import { getGameById } from "@/lib/db/catalog";
 import { getGamePrices } from "@/lib/db/prices";
 import { getCurrentUser } from "@/lib/auth";
 import { getUserWishlists } from "@/lib/db/wishlists";
+import { getGameImageUrl } from "@/lib/gameImage";
 import AddToWishlistModal from "./AddToWishlistModal";
 import GameFullDetails from "@/components/GameFullDetails";
 import SimilarGames from "@/components/SimilarGames";
@@ -43,9 +44,7 @@ export default async function GameDetailPage({ params }: PageProps) {
 
   const userWishlists = user ? await getUserWishlists(user.userId) : [];
 
-  const imageUrl = game.steamAppId
-    ? `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${game.steamAppId}/header.jpg`
-    : null;
+  const imageUrl = getGameImageUrl(game.gameId, game.steamAppId);
 
   return (
     <div className="space-y-8">

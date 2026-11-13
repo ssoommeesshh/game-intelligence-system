@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { searchGames, getAllGenres, getAllTags } from "@/lib/db/catalog";
+import { getGameImageUrl } from "@/lib/gameImage";
 import { Search, Filter, Tag as TagIcon, Sparkles, ExternalLink } from "lucide-react";
 
 interface PageProps {
@@ -124,9 +125,7 @@ export default async function GamesPage({ searchParams }: PageProps) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {games.map((game) => {
-            const imageUrl = game.steamAppId
-              ? `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${game.steamAppId}/header.jpg`
-              : null;
+            const imageUrl = getGameImageUrl(game.gameId, game.steamAppId);
 
             return (
               <div
