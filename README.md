@@ -94,11 +94,15 @@ MongoDB and PostgreSQL are optional enhancements: the MySQL catalog continues to
 # MongoDB extended descriptions
 mongosh $env:MONGODB_URI database/mongodb-seed.js
 
-# pgvector semantic ranking
+# pgvector schema (does not contain hard-coded vectors)
 Get-Content database/postgres-vector.sql -Raw | psql $env:POSTGRES_URL
+
+# one-time local model download, then generate real vectors from MySQL + MongoDB text
+ollama pull nomic-embed-text
+npm run embeddings:generate
 ```
 
-`GET /api/games/{gameId}/similar?limit=6` returns the pgvector-ranked games, hydrated from the authoritative MySQL catalog.
+The generator combines each game's MySQL title, catalog description, genres, and tags with its MongoDB long description, story, and features. It hashes that text and skips unchanged games on later runs. `GET /api/games/{gameId}/similar?limit=6` returns pgvector-ranked games, hydrated from the authoritative MySQL catalog.
 
 ---
 
