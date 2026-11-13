@@ -14,11 +14,17 @@ const KNOWN_GAMES = new Set([
 ]);
 
 export function getGameImageUrl(gameId: string, steamAppId?: number | null): string {
-  // Use locally served SVG banners from /public/games/
-  // Guarantees 100% instant offline loading and complete immunity from network/campus firewall blocks on steamstatic.com
+  // 1. Serve authentic local high-resolution cover art (JPEG) stored in /public/games/
   if (KNOWN_GAMES.has(gameId)) {
-    return `/games/${gameId}.svg`;
+    return `/games/${gameId}.jpg`;
   }
+  
+  // 2. Fallback to unblocked image proxy cache for any dynamically added Steam games
+  if (steamAppId) {
+    return `https://images.weserv.nl/?url=shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${steamAppId}/header.jpg`;
+  }
+
+  // 3. Fallback vector banner
   return `/games/fallback.svg`;
 }
 
