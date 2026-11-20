@@ -70,39 +70,157 @@ A high-performance DBMS project combining relational catalog indexing, multi-sto
 
 ## Quick Setup Instructions
 
-### 1. Database Initialization
-Ensure your local MySQL service (`MySQL80`) is running, then load the schema and seeds:
+### 1. Prerequisites (Windows / PowerShell)
+
+Run the following commands from the repository root. Install:
+
+- **Node.js 22.19+** and npm.
+- **MySQL 8.0** for the catalog, prices, users, and wishlists.
+- **MongoDB Community Server** and **mongosh** for extended game content. Installing mongosh alone does not install the database server.
+- **PostgreSQL** (17 is used in the examples) with **pgvector installed for that PostgreSQL version**. PostgreSQL alone does not include the extension; follow the [official native Windows pgvector installation instructions](https://github.com/pgvector/pgvector#windows) before applying the SQL below.
+- **Ollama** for generating embeddings, following its [Windows setup instructions](https://docs.ollama.com/windows).
+
+MySQL is required to run the core app. MongoDB and PostgreSQL enable the full-details and similar-games sections. Ollama is needed during embedding generation; browsing already-generated recommendations only needs the databases.
+
+Open a new PowerShell terminal after installing tools. If a command is not recognized, add its installation directory to PATH or use the full executable path. These examples avoid relying on PATH for MySQL and PostgreSQL:
 
 ```powershell
-# From the repository root
-Get-Content database/schema.sql -Raw | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p
-Get-Content database/seed.sql -Raw | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p
+$mysql = "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe"
+$psql = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
+# Adjust these paths to your installed versions.
+node --version
+npm --version
+& $mysql --version
+& $psql --version
+mongosh --version
+ollama --version
 ```
 
-### 2. Run Application
+### 2. Dependencies and Local Configuration
+
 ```powershell
-npm install
-npm run dev
+npm ci
+if (-not (Test-Path .env.local)) { Copy-Item .env.example .env.local }
 ```
-Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
-### 3. Optional Somesh Features (F07 and F08)
+Edit `.env.local` with your actual database credentials. Keep the database names below when using the supplied seed scripts. Use a non-empty MySQL password: the embedding generator requires it.
 
-MongoDB and PostgreSQL are optional enhancements: the MySQL catalog continues to work if either service is unavailable. Set `MONGODB_URI`, `POSTGRES_URL`, and a strong `SESSION_SECRET` in `.env.local`, then initialize the two extension stores:
+```dotenv
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=YOUR_MYSQL_PASSWORD
+MYSQL_DATABASE=game_intelligence_db
+SESSION_SECRET=YOUR_RANDOM_SECRET
+MONGODB_URI=mongodb://localhost:27017/game_intelligence
+MONGODB_DATABASE=game_intelligence
+POSTGRES_URL=postgresql://postgres:YOUR_POSTGRES_PASSWORD@localhost:5432/game_embeddings
+OLLAMA_URL=http://localhost:11434
+OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+```
+
+Generate a session secret with the following command and paste its output as `SESSION_SECRET`. Do not use the example file's shared secret. `.env.local` is ignored by Git.
 
 ```powershell
-# MongoDB extended descriptions
-mongosh $env:MONGODB_URI database/mongodb-seed.js
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
 
-# pgvector schema (does not contain hard-coded vectors)
-Get-Content database/postgres-vector.sql -Raw | psql $env:POSTGRES_URL
+URL-encode special characters in passwords used inside connection URLs (for example, `@` becomes `%40`). If your MongoDB server requires authentication, include its credentials and authentication database in `MONGODB_URI`.
 
-# one-time local model download, then generate real vectors from MySQL + MongoDB text
+Next.js and `npm run embeddings:generate` load `.env.local` themselves. PowerShell does **not**, so load these variables before running the `mongosh` and `psql` commands below. This loader expects one `KEY=VALUE` assignment per line, optionally quoted, without inline comments:
+
+```powershell
+Get-Content .env.local | ForEach-Object {
+  if ($_ -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$') {
+    $name = $Matches[1]
+    $value = $Matches[2].Trim()
+    if (($value.StartsWith('"') -and $value.EndsWith('"')) -or
+        ($value.StartsWith("'") -and $value.EndsWith("'"))) {
+      $value = $value.Substring(1, $value.Length - 2)
+    }
+    [Environment]::SetEnvironmentVariable($name, $value, 'Process')
+  }
+}
+```
+
+### 3. Start the Database Services
+
+If installed as Windows services, check their status in an Administrator PowerShell terminal:
+
+```powershell
+Get-Service -Name MySQL80,MongoDB,postgresql-x64-17
+# Run only for services shown as Stopped; names may differ by installation.
+Start-Service -Name MySQL80
+Start-Service -Name MongoDB
+Start-Service -Name postgresql-x64-17
+```
+
+The default ports are MySQL `3306`, MongoDB `27017`, and PostgreSQL `5432`. Match `.env.local` to your actual ports. If you did not install a database as a service, start it using its installation's launcher/configuration instead.
+
+### 4. Initialize Data (First Setup Only)
+
+**The MySQL schema script drops and recreates `game_intelligence_db`; the seed script truncates its tables. Run these only for a fresh demo database or an intentional reset, never as a daily startup step.**
+
+```powershell
+# Enter your MySQL root password when prompted. Stop if either command fails.
+Get-Content database/schema.sql -Raw | & $mysql -u root -p
+Get-Content database/seed.sql -Raw | & $mysql -u root -p
+
+# Upsert extended content for the 12 demo games.
+# Re-running replaces those MongoDB documents, including any manual edits.
+mongosh "$env:MONGODB_URI" --file database/mongodb-seed.js
+
+# Create the PostgreSQL database once; skip this command if it already exists.
+# Adjust host, port, and user to match POSTGRES_URL; enter its password when prompted.
+& $psql -h localhost -p 5432 -U postgres -d postgres -W -v ON_ERROR_STOP=1 -c "CREATE DATABASE game_embeddings;"
+
+# Enable pgvector and create/migrate the embedding table.
+& $psql -d "$env:POSTGRES_URL" -v ON_ERROR_STOP=1 -f database/postgres-vector.sql
+```
+
+The PostgreSQL account must have permission to create the database and enable the extension. If `vector.control` is missing or `extension "vector" is not available`, install pgvector into the matching PostgreSQL server installation first; the SQL script enables an installed extension, it does not install its binaries.
+
+### 5. Generate Embeddings
+
+Start the Ollama Windows app. If its server is not already running, run `ollama serve` in a separate terminal and leave it open. Its default address is `http://localhost:11434`.
+
+```powershell
 ollama pull nomic-embed-text
 npm run embeddings:generate
 ```
 
-The generator combines each game's MySQL title, catalog description, genres, and tags with its MongoDB long description, story, and features. It hashes that text and skips unchanged games on later runs. `GET /api/games/{gameId}/similar?limit=6` returns pgvector-ranked games, hydrated from the authoritative MySQL catalog.
+The generator reads MySQL titles, descriptions, genres, and tags plus MongoDB descriptions, stories, and features. It stores the generated vectors in PostgreSQL and skips records whose source hash and model name are unchanged. A fresh seeded catalog should finish with `12 generated, 0 unchanged, 12 catalog games`; a repeat should report `0 generated, 12 unchanged`.
+
+Complete generation for **all** games before using recommendations, including after migrating the original hard-coded 3D vectors or changing models. An interrupted run can leave incompatible dimensions or models mixed in the table; rerun the same command to finish. Re-run after editing game content. Ollama can be stopped once generation finishes successfully.
+
+### 6. Run the App (Everyday Startup)
+
+With the database services running, open a terminal in the repository root:
+
+```powershell
+npm run dev
+```
+
+This one command starts **both the frontend and the backend API routes** through Next.js. Leave the terminal open, wait for `Ready`, then open **[http://localhost:3000](http://localhost:3000)** (or the port printed by Next.js). Stop it with `Ctrl+C`. Use this npm command directly; the legacy `run-dev.ps1` contains another developer's machine-specific Node path.
+
+For subsequent runs, do not reload schema/seed scripts or regenerate unchanged embeddings. Restart the dev server after changing `.env.local`; also reload PowerShell variables if using CLI database commands. For a production deployment, use `npm run build` then `npm start`, configure a private `SESSION_SECRET`, and serve over HTTPS for secure login cookies.
+
+### 7. Check the Setup
+
+- Open `/games`: the seeded catalog should contain 12 games.
+- Open `/login`: use `somesh@example.com` / `password123` for the admin demo, then visit `/wishlists` and `/admin/prices`.
+- Open `/games/gam-001`: extended MongoDB content and a **You may also like** section should appear after seeding and embedding generation.
+- Open `/api/games/gam-001/similar?limit=6`: expect an `items` array containing similar games. An empty array can also indicate a PostgreSQL/configuration failure, since the current implementation catches database errors.
+
+Useful database checks (in a terminal with the paths and environment loaded above):
+
+```powershell
+mongosh "$env:MONGODB_URI" --quiet --eval 'db.getSiblingDB("game_intelligence").game_details.countDocuments({})'
+& $psql -d "$env:POSTGRES_URL" -c "SELECT extversion FROM pg_extension WHERE extname = 'vector';"
+& $psql -d "$env:POSTGRES_URL" -c "SELECT embedding_model, vector_dims(embedding) AS dimensions, COUNT(*) FROM game_embeddings GROUP BY embedding_model, vector_dims(embedding);"
+```
+
+Expect 12 MongoDB documents and 12 vectors belonging to the same model and dimension. Recommendations currently use an existing game's vector; a live natural-language search box is not implemented. If login returns `500`, check the server terminal, MySQL credentials/database, and `SESSION_SECRET`. A `401` indicates invalid credentials. The first page load can take longer while Next.js compiles.
 
 ---
 
