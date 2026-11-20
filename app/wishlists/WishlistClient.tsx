@@ -1,5 +1,7 @@
 "use client";
 
+import { getGameImageUrl } from "@/lib/gameImage";
+
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -233,9 +235,7 @@ export default function WishlistClient({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-5">
             {deals.map((deal) => {
-              const imgUrl = deal.steamAppId
-                ? `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${deal.steamAppId}/header.jpg`
-                : null;
+              const imgUrl = getGameImageUrl(deal.gameId, deal.steamAppId);
 
               return (
                 <div

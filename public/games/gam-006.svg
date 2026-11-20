@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 215" width="460" height="215">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a0808" />
+      <stop offset="100%" stop-color="#3f0d0d" />
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#eab308" stop-opacity="0.8" />
+    </linearGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M 24 0 L 0 0 0 24" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="460" height="215" fill="url(#bg)" />
+  <rect width="460" height="215" fill="url(#grid)" />
+
+  <!-- Ambient glow circle -->
+  <circle cx="380" cy="40" r="140" fill="#f97316" opacity="0.12" filter="blur(40px)" />
+  <circle cx="80" cy="180" r="100" fill="#eab308" opacity="0.12" filter="blur(30px)" />
+
+  <!-- Decorative technical lines -->
+  <line x1="30" y1="35" x2="120" y2="35" stroke="#f97316" stroke-width="2" opacity="0.8" />
+  <line x1="30" y1="185" x2="430" y2="185" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+  <rect x="30" y="30" width="4" height="10" fill="#f97316" />
+
+  <!-- Top Badge -->
+  <rect x="330" y="25" width="100" height="20" rx="4" fill="rgba(0,0,0,0.5)" stroke="#f97316" stroke-width="1" stroke-opacity="0.6"/>
+  <text x="380" y="38" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="9" font-weight="700" fill="#f97316" text-anchor="middle" letter-spacing="1">SUPERGIANT GAMES</text>
+
+  <!-- Main Game Title -->
+  <text x="30" y="105" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Montserrat', sans-serif" font-size="24" font-weight="900" fill="#ffffff" letter-spacing="1">
+    HADES
+  </text>
+
+  <!-- Subtitle / Genre -->
+  <text x="30" y="130" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="600" fill="#f97316" letter-spacing="1.5">
+    BATTLE OUT OF HELL • ROGUELIKE
+  </text>
+
+  <!-- Tagline -->
+  <text x="30" y="152" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="9.5" font-weight="400" fill="#94a3b8" letter-spacing="0.5">
+    IN THE NAME OF HADES
+  </text>
+
+  <!-- Bottom Accent Stripe -->
+  <rect x="0" y="211" width="460" height="4" fill="url(#glow)" />
+</svg>
